@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -15,7 +16,7 @@ export default function SupervisorDashboard() {
   // Función para cargar absolutamente todo
   async function cargarTodo() {
     const [resVentas, resRep, resDesp, resArr] = await Promise.all([
-      supabase.from('ventas').select('*').order('fecha', { ascending: false }).limit(10),
+      supabase.from('ventas').select('*').order('fecha', { ascending: false }),
       supabase.from('reparaciones').select('*').order('fecha_solicitud', { ascending: false }),
       supabase.from('despachos').select('*').order('id', { ascending: false }),
       supabase.from('arriendos').select('*, productos(nombre)')
@@ -52,6 +53,31 @@ export default function SupervisorDashboard() {
 
   // Fecha actual formateada
   const fechaHoy = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Agrupar ingresos por mes (últimos 12 meses)
+  const datosMensuales = useMemo(() => {
+    const map = new Map<string, { mes: string; ventas: number; arriendos: number }>();
+
+    ventas.forEach((v) => {
+      const mes = v.fecha ? v.fecha.slice(0, 7) : '';
+      if (!mes) return;
+      const actual = map.get(mes) || { mes, ventas: 0, arriendos: 0 };
+      actual.ventas += Number(v.monto_total);
+      map.set(mes, actual);
+    });
+
+    arriendos.forEach((a) => {
+      const mes = a.fecha_inicio ? a.fecha_inicio.slice(0, 7) : '';
+      if (!mes) return;
+      const actual = map.get(mes) || { mes, ventas: 0, arriendos: 0 };
+      actual.arriendos += Number(a.monto_total);
+      map.set(mes, actual);
+    });
+
+    return Array.from(map.values())
+      .sort((a, b) => a.mes.localeCompare(b.mes))
+      .slice(-12);
+  }, [ventas, arriendos]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors p-6 md:p-10 font-sans">
@@ -109,6 +135,28 @@ export default function SupervisorDashboard() {
           </div>
         </div>
 
+        {/* GRÁFICO DE INGRESOS MENSUALES */}
+        {datosMensuales.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-10">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4">Ingresos Mensuales</h3>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={datosMensuales} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                <XAxis dataKey="mes" tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(value: any, name: any) => [`$${Number(value).toLocaleString('es-CL')}`, name]}
+                  labelFormatter={(label) => `Mes: ${label}`}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend />
+                <Bar dataKey="ventas" name="Ventas" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="arriendos" name="Arriendos" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
         {/* SECCIÓN PRINCIPAL: LISTAS RECIENTES */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
@@ -118,7 +166,7 @@ export default function SupervisorDashboard() {
               <h3 className="text-lg font-black text-slate-900 dark:text-white">Últimos Movimientos de Dinero</h3>
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {ventas.map(v => (
+              {ventas.slice(0, 10).map(v => (
                 <div key={v.id} className="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-lg">
