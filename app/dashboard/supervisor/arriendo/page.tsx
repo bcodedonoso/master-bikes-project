@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export default function GestionArriendos() {
+  const router = useRouter();
   const [arriendos, setArriendos] = useState<any[]>([]);
 
   async function cargar() {
@@ -21,6 +23,14 @@ export default function GestionArriendos() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => router.push('/dashboard/supervisor')}
+          className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+        >
+          ← Volver al Centro de Comando
+        </button>
+      </div>
       <h1 className="text-2xl font-black mb-6 dark:text-white">Control de Arriendos y Devoluciones</h1>
       <div className="grid gap-4">
         {arriendos.map(a => (

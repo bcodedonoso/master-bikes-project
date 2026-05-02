@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export default function SupervisorDashboard() {
+  const router = useRouter();
   const [ventas, setVentas] = useState<any[]>([]);
   const [reparaciones, setReparaciones] = useState<any[]>([]);
   const [despachos, setDespachos] = useState<any[]>([]);
@@ -98,6 +100,12 @@ export default function SupervisorDashboard() {
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 rounded-full"></div>
             <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 relative z-10">Flota Arrendada</p>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white relative z-10">{bicisArrendadas} <span className="text-lg font-medium text-slate-400">unidades</span></h2>
+            <button 
+              onClick={() => router.push('/dashboard/supervisor/arriendo')}
+              className="mt-3 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline relative z-10"
+            >
+              Gestionar Arriendos →
+            </button>
           </div>
         </div>
 
@@ -150,8 +158,14 @@ export default function SupervisorDashboard() {
 
             {/* Arriendos Express */}
             <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Arriendos Activos</h3>
+                <button 
+                  onClick={() => router.push('/dashboard/supervisor/arriendo')}
+                  className="text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded uppercase"
+                >
+                  Gestionar
+                </button>
               </div>
               <div className="p-5 space-y-3">
                 {arriendos.filter(a => a.estado === 'en_uso').slice(0, 4).map(a => (

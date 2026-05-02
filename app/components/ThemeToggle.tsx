@@ -4,21 +4,19 @@ import { useEffect, useState } from "react";
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
-  // Al cargar la página, revisa si ya estaba en modo oscuro
+  // Al cargar la página, revisa si ya está en modo oscuro (sistema o manual)
   useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setIsDark(true);
-    }
+    setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
   const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      setIsDark(false);
-    } else {
+    const next = !isDark;
+    if (next) {
       document.documentElement.classList.add("dark");
-      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
     }
+    setIsDark(next);
   };
 
   return (

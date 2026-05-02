@@ -78,28 +78,24 @@ export default function ClienteDashboard() {
     cargarTodo();
   };
 
-  // ACCIÓN: Comprar Producto
+  // ACCIÓN: Comprar Producto (MODIFICADA SIN EMAIL)
   const handleComprar = async (p: any) => {
     const { data: { user } } = await supabase.auth.getUser();
     
+    // Guardamos la venta en la base de datos
     await supabase.from('ventas').insert([{ monto_total: p.precio, tipo_servicio: 'venta_producto' }]);
-    await supabase.from('despachos').insert([{ cliente_id: user?.id, detalle: `Compra: ${p.nombre}`, direccion: "Dirección Usuario", estado: 'pedido_tomado' }]);
     
-    try {
-      await fetch('/api/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: user?.email,
-          subject: 'Confirmación de Compra - MasterBikes',
-          mensaje: `Gracias por comprar ${p.nombre}. Estamos preparando tu despacho.`
-        }),
-      });
-    } catch (error) {
-      console.error("Error enviando email", error);
-    }
+    // Generamos el despacho
+    await supabase.from('despachos').insert([{ 
+      cliente_id: user?.id, 
+      detalle: `Compra: ${p.nombre}`, 
+      direccion: "Dirección Guardada", 
+      estado: 'pedido_tomado' 
+    }]);
     
-    alert("¡Compra exitosa! Revisa tu correo y la sección de despachos.");
+    // Ya no hay fetch('/api/email'...), solo aviso directo y recarga
+    alert(`¡Compra de ${p.nombre} exitosa! Puedes ver el estado en la sección de Despachos.`);
+    cargarTodo();
   };
 
   return (
@@ -183,7 +179,7 @@ export default function ClienteDashboard() {
           </div>
         </div>
 
-        {/* SECCIÓN 3: TIENDA (CORREGIDA) */}
+        {/* SECCIÓN 3: TIENDA */}
         <section className="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-[3rem] border border-gray-200 dark:border-gray-700 shadow-sm">
           <h2 className="text-3xl font-black text-black dark:text-white mb-10">Tienda de Repuestos y Bicis</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
